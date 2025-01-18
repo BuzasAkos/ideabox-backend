@@ -13,13 +13,15 @@ export class Idea {
 
 export class Vote {
     id: string;
-    user: string;
-    timestamp: Date;
+    createdBy: string;
+    createdAt: Date;
+    boolId: boolean;
 }
 
 export class Comment {
     id: string;
-    user: string;
     text: string;
-    timestamp: Date;
+    createdBy: string;
+    createdAt: Date;
+    boolId: boolean;
 }
