@@ -5,7 +5,6 @@ import { IdeaModule } from './idea/idea.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
