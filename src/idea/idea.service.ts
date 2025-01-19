@@ -3,6 +3,7 @@ import { CreateIdeaDto } from './dto/create-idea.dto';
 import { UpdateIdeaDto } from './dto/update-idea.dto';
 import { Idea, IdeaHistory } from './entities/idea.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class IdeaService {
@@ -18,9 +19,9 @@ export class IdeaService {
     const status = 'new';
     try {
       const idea: Idea = {
+        _id: new ObjectId(),
         title,
         description,
-        _id: uuidv4(),
         status,
         voteCount: 0,
         votes: [],
@@ -32,7 +33,15 @@ export class IdeaService {
         boolId: true,
         history: []
       }
-      idea.history.push(this.createHistoryItem(idea, user));
+      idea.history.push({
+        id: uuidv4(),
+        title,
+        description,
+        status,
+        createdAt: new Date(),
+        createdBy: user,
+      });
+
       this.ideas.push(idea);
       return idea;
     } 
@@ -50,7 +59,7 @@ export class IdeaService {
 
   // get one idea document given by its id
   findOne(id: string) {
-    const idea = this.ideas.find(item => item._id === id && item.boolId);
+    const idea = this.ideas.find(item => item._id.toString() === id && item.boolId);
     if (!idea) {
       throw new HttpException('idea is not found with this id', HttpStatus.NOT_FOUND);
     }
@@ -71,9 +80,14 @@ export class IdeaService {
     idea.status = status ?? idea.status;
     idea.modifiedBy = user;
     idea.modifiedAt = new Date()
-    idea.history.push(this.createHistoryItem(idea, user));
+    idea.history.push({
+      id: uuidv4(),
+      ...updateIdeaDto,
+      createdAt: new Date(),
+      createdBy: user,
+    });
 
-    return this.saveIdea(idea);
+    return idea;
   }
 
   // remove an idea (set boolId = false)
@@ -84,29 +98,8 @@ export class IdeaService {
     idea.modifiedBy = user;
     idea.modifiedAt = new Date();
     idea.boolId = false;
-    this.saveIdea(idea)
 
     return {message: 'idea deleted'};
   }
 
-  // helper: generates a history item
-  createHistoryItem(idea: Idea, user: string) {
-    const historyItem: IdeaHistory = {
-      id: uuidv4(),
-      title: idea.title,
-      description: idea.description,
-      status: idea.status,
-      createdBy: user,
-      createdAt: new Date()
-    }
-    return historyItem;
-  }
-
-  // helper: saves an idea (in memory)
-  saveIdea(idea: Idea) {
-    const index = this.ideas.findIndex(item => item._id === idea._id && item.boolId);
-    if (index === -1) return null;
-    this.ideas[index] = idea;
-    return this.ideas[index];
-  }
 }

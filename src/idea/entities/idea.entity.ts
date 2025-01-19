@@ -1,5 +1,7 @@
+import { ObjectId } from "mongodb";
+
 export class Idea {
-    _id: string;
+    _id: ObjectId;
     title: string;
     description?: string;
     voteCount: number;
