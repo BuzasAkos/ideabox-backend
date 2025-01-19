@@ -6,8 +6,11 @@ export class Idea {
     votes: Vote[];
     comments: Comment[];
     status: string;
+    history: IdeaHistory[];
     createdBy: string;
     createdAt: Date;
+    modifiedBy: string;
+    modifiedAt: Date;
     boolId: boolean;
 }
 
@@ -15,6 +18,8 @@ export class Vote {
     id: string;
     createdBy: string;
     createdAt: Date;
+    modifiedBy: string;
+    modifiedAt: Date;
     boolId: boolean;
 }
 
@@ -23,5 +28,16 @@ export class Comment {
     text: string;
     createdBy: string;
     createdAt: Date;
+    modifiedBy: string;
+    modifiedAt: Date;
     boolId: boolean;
+}
+
+export class IdeaHistory {
+    id: string;
+    title?: string;
+    description?: string;
+    status?: string;
+    createdBy: string;
+    createdAt: Date;
 }
