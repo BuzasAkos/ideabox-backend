@@ -16,7 +16,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       inject: [ConfigService],
       useFactory: async () => ({
         type: 'mongodb',
-        url: `${process.env.MONGOATLAS_URL}`,
+        url: `${process.env.MONGO_TUTORIAL_URL}`,
         database: 'tutorial',
         synchronize: true,
         entities: [__dirname + '/**/*.entity{.ts,.js}'], // Point to entities directory
