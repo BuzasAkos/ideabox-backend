@@ -99,7 +99,7 @@ export class IdeaService {
 
   // remove an idea (set boolId = false)
   async remove(id: string) {
-    const user = 'Ákos'
+    const user = 'Ákos';
     const idea = await this.findOne(id);
 
     idea.modifiedBy = user;
@@ -108,6 +108,48 @@ export class IdeaService {
     await this.ideaRepository.save(idea);
 
     return {message: 'idea deleted'};
+  }
+
+  // add a vote to an idea by a user
+  async addVote(id: string) {
+    const user = 'Ákos';
+    const idea = await this.findOne(id);
+    if (idea.votes.find(item => item.boolId && item.createdBy === user)) {
+      throw new HttpException('You have already voted for this idea.', HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    idea.votes.push({
+      id: uuidv4(),
+      createdBy: user,
+      createdAt: new Date(),
+      modifiedBy: user,
+      modifiedAt: new Date(),
+      boolId: true
+    });
+    idea.voteCount = idea.votes.filter(item => item.boolId).length;
+    idea.modifiedBy = user
+    idea.modifiedAt = new Date();
+
+    return await this.ideaRepository.save(idea);
+  }
+
+  // remove a vote from an idea by a user
+  async removeVote(id: string) {
+    const user = 'Ákos';
+    const idea = await this.findOne(id);
+    const vote= idea.votes.find(item => item.createdBy === user && item.boolId);
+    if (!vote) {
+      throw new HttpException('Vote not found by this user.', HttpStatus.NOT_FOUND);
+    }
+
+    vote.boolId = false;
+    vote.modifiedBy = user
+    vote.modifiedAt = new Date();
+    idea.voteCount = idea.votes.filter(item => item.boolId).length;
+    idea.modifiedBy = user
+    idea.modifiedAt = new Date();
+
+    return await this.ideaRepository.save(idea);
   }
 
 }

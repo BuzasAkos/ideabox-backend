@@ -31,4 +31,15 @@ export class IdeaController {
   async remove(@Param('id') id: string) {
     return await this.ideaService.remove(id);
   }
+
+  @Patch(':id/vote')
+  async addVote(@Param('id') id: string) {
+    return await this.ideaService.addVote(id);
+  }
+
+  @Patch(':id/unvote')
+  async removeVote(@Param('id') id: string) {
+    return await this.ideaService.removeVote(id);
+  }
+
 }
