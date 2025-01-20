@@ -152,4 +152,42 @@ export class IdeaService {
     return await this.ideaRepository.save(idea);
   }
 
+  // add comment by user
+  async addComment(id: string, text: string) {
+    const user = 'Ákos';
+    const idea = await this.findOne(id);
+
+    idea.comments.push({
+      id: uuidv4(),
+      text,
+      createdBy: user,
+      createdAt: new Date(),
+      modifiedBy: user,
+      modifiedAt: new Date(),
+      boolId: true
+    });
+
+    return await this.ideaRepository.save(idea);
+  }
+
+  // remove a specific comment
+  async removeComment(id: string, commentId: string) {
+    const user = 'Ákos';
+    const idea = await this.findOne(id);
+    const comment = idea.comments.find(item => item.boolId && item.id === commentId);
+    if (!comment) {
+      throw new HttpException('Comment not found with this id.', HttpStatus.NOT_FOUND);
+    }
+    if (comment.createdBy !== user) {
+      throw new HttpException('You are not authorized to delete this comment', HttpStatus.UNAUTHORIZED);
+    }
+
+    comment.boolId = false;
+    comment.modifiedAt = new Date();
+    comment.modifiedBy = user;
+
+    await this.ideaRepository.save(idea);
+    return {message: 'comment deleted'}
+  }
+
 }

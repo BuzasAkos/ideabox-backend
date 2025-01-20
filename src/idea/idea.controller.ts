@@ -42,4 +42,14 @@ export class IdeaController {
     return await this.ideaService.removeVote(id);
   }
 
+  @Post(':id/comment')
+  async addComment(@Param('id') id: string, @Body('text') text: string) {
+    return await this.ideaService.addComment(id, text);
+  }
+
+  @Delete(':id/comment/:commentId')
+  async removeComment(@Param('id') id: string, @Param('commentId') commentId: string) {
+    return await this.ideaService.removeComment(id, commentId);
+  }
+
 }
