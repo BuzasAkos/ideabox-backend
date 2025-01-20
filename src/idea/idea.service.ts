@@ -190,4 +190,91 @@ export class IdeaService {
     return {message: 'comment deleted'}
   }
 
+  // get all ideas that I voted for, sort by submission date, filtering on boolId in all embedded arrays
+  async getFavouriteIdeas() {
+    const user = 'Ákos';
+
+    const pipeline = [
+      { 
+        $match: { 
+          boolId: true, 
+          votes: { 
+            $elemMatch: { createdBy: user, boolId: true } 
+          }
+        } 
+      },
+      { 
+        $addFields: { 
+          comments: { $filter: { 
+            input: "$comments",      
+            as: "comment",
+            cond: { $eq: ["$$comment.boolId", true] }
+          } } 
+        } 
+      },
+      { 
+        $addFields: { 
+          votes: { $filter: { 
+            input: "$votes",      
+            as: "vote",
+            cond: { $eq: ["$$vote.boolId", true] }
+          } } 
+        } 
+      },
+      { 
+        $unset: "history" 
+      },
+      { 
+        $sort: { voteCount: -1, createdAt: -1 } 
+      },
+    ]
+    const ideas = await this.ideaRepository.aggregate(pipeline).toArray();
+
+    return { ideas };
+  }
+
+  // get all ideas ranked by votes, filtered by boolId, sorting embedded comments by creation date
+  async getAllIdeas() {
+    const pipeline = [
+      { 
+        $match: { boolId: true } 
+      },
+      { 
+        $addFields: { 
+          comments: { $filter: { 
+            input: "$comments",      
+            as: "comment",
+            cond: { $eq: ["$$comment.boolId", true] }
+          } } 
+        } 
+      },
+      { 
+        $addFields: { 
+          comments: { $sortArray: { 
+            input: "$comments",      
+            sortBy: { createdAt: -1 }
+          } } 
+        } 
+      },
+      { 
+        $addFields: { 
+          votes: { $filter: { 
+            input: "$votes",      
+            as: "vote",
+            cond: { $eq: ["$$vote.boolId", true] }
+          } } 
+        } 
+      },
+      { 
+        $unset: "history" 
+      },
+      { 
+        $sort: { voteCount: -1, createdAt: -1 } 
+      },
+    ]
+    const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
+
+    return { ideas };
+  }
+
 }

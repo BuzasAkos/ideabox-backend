@@ -13,8 +13,13 @@ export class IdeaController {
   }
 
   @Get()
-  async findAll() {
-    return await this.ideaService.findAll();
+  async getAllIdeas() {
+    return await this.ideaService.getAllIdeas();
+  }
+
+  @Get('favourite')
+  async getFavouriteIdeas() {
+    return await this.ideaService.getFavouriteIdeas();
   }
 
   @Get(':id')
