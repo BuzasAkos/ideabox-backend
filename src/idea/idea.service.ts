@@ -73,6 +73,14 @@ export class IdeaService {
     return idea;
   }
 
+  // get one idea by id and return
+  async getIdea(id: string) {
+    const idea = await this.findOne(id);
+    return this.filterValidItems( 
+      await this.ideaRepository.save(idea) 
+    );
+  }
+
   // update idea title and/or description by user
   async update(id: string, updateIdeaDto: UpdateIdeaDto) {
     const user = 'Ákos'
@@ -94,7 +102,9 @@ export class IdeaService {
       createdBy: user,
     });
 
-    return await this.ideaRepository.save(idea);
+    return this.filterValidItems( 
+      await this.ideaRepository.save(idea) 
+    );
   }
 
   // remove an idea (set boolId = false)
@@ -130,7 +140,9 @@ export class IdeaService {
     idea.modifiedBy = user
     idea.modifiedAt = new Date();
 
-    return await this.ideaRepository.save(idea);
+    return this.filterValidItems( 
+      await this.ideaRepository.save(idea) 
+    );
   }
 
   // remove a vote from an idea by a user
@@ -149,7 +161,9 @@ export class IdeaService {
     idea.modifiedBy = user
     idea.modifiedAt = new Date();
 
-    return await this.ideaRepository.save(idea);
+    return this.filterValidItems( 
+      await this.ideaRepository.save(idea) 
+    );
   }
 
   // add comment by user
@@ -167,7 +181,9 @@ export class IdeaService {
       boolId: true
     });
 
-    return await this.ideaRepository.save(idea);
+    return this.filterValidItems( 
+      await this.ideaRepository.save(idea) 
+    );
   }
 
   // remove a specific comment
@@ -190,7 +206,7 @@ export class IdeaService {
     return {message: 'comment deleted'}
   }
 
-  // get all ideas that I voted for, sort by submission date, filtering on boolId in all embedded arrays
+  // get all ideas that I voted for, sort by creation date, filtering on boolId in all embedded arrays
   async getFavouriteIdeas() {
     const user = 'Ákos';
 
@@ -275,6 +291,16 @@ export class IdeaService {
     const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
 
     return { ideas };
+  }
+
+  // helper function: filter embedded arrays of an idea by boolId
+  filterValidItems(idea: Idea): Idea {
+    return {
+      ...idea,
+      votes: idea.votes.filter(i => i.boolId),
+      comments: idea.comments.filter(i => i.boolId),
+      history: []
+    }
   }
 
 }
