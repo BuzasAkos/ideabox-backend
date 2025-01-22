@@ -8,8 +8,8 @@ export class IdeaController {
   constructor(private readonly ideaService: IdeaService) {}
 
   @Post()
-  async create(@Body() createIdeaDto: CreateIdeaDto) {
-    return await this.ideaService.create(createIdeaDto);
+  async createIdea(@Body() createIdeaDto: CreateIdeaDto) {
+    return await this.ideaService.createIdea(createIdeaDto);
   }
 
   @Get()
@@ -33,13 +33,13 @@ export class IdeaController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto) {
-    return await this.ideaService.update(id, updateIdeaDto);
+  async updateIdea(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto) {
+    return await this.ideaService.updateIdea(id, updateIdeaDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.ideaService.remove(id);
+  async removeIdea(@Param('id') id: string) {
+    return await this.ideaService.removeIdea(id);
   }
 
   @Patch(':id/vote')
