@@ -22,6 +22,12 @@ export class IdeaService {
     const { title, description } = createIdeaDto;
     const user = 'Ákos';
     const status = 'new';
+
+    const existingTitles = await this.getAllTitles();
+    if (existingTitles.includes(title.toLowerCase())) {
+      throw new HttpException('This title already exist', HttpStatus.CONFLICT);
+    }
+    
     try {
       const idea: WithoutId<Idea> = {
         title,
@@ -318,6 +324,38 @@ export class IdeaService {
     const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
 
     return { ideas };
+  }
+
+  // helper: get existing idea titles
+  /* async getAllTitlesV2() {
+    const titles = await this.ideaRepository.aggregate([
+      { 
+        $match: {
+          boolId: true
+        } 
+      },
+      {
+        $project: {
+          title: 1,
+          _id: 0
+        }
+      }
+    ]).toArray();
+    return titles.map(item => item.title);
+  } */
+
+  // helper: get existing idea titles
+  async getAllTitles() {
+    const ideas = await this.ideaRepository.find({
+      where: {
+        boolId: true, 
+      },
+      select: {
+        title: true, 
+      },
+    });
+  
+    return ideas.map(idea => idea.title.toLowerCase());
   }
 
   // helper function: filter embedded arrays of an idea by boolId

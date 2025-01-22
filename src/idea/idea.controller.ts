@@ -23,8 +23,8 @@ export class IdeaController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.ideaService.findOne(id);
+  async getIdea(@Param('id') id: string) {
+    return await this.ideaService.getIdea(id);
   }
 
   @Patch('status')
