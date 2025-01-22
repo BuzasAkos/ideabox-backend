@@ -17,19 +17,9 @@ export class IdeaController {
     return await this.ideaService.getAllIdeas();
   }
 
-  @Get('favourite')
-  async getFavouriteIdeas() {
-    return await this.ideaService.getFavouriteIdeas();
-  }
-
   @Get(':id')
   async getIdea(@Param('id') id: string) {
     return await this.ideaService.getIdea(id);
-  }
-
-  @Patch('status')
-  async statusUpdate(@Body('ideaIds') ideaIds: string[], @Body('status') status: string) {
-    return await this.ideaService.statusUpdate(ideaIds, status);
   }
 
   @Patch(':id')
@@ -61,5 +51,16 @@ export class IdeaController {
   async removeComment(@Param('id') id: string, @Param('commentId') commentId: string) {
     return await this.ideaService.removeComment(id, commentId);
   }
+
+  @Get('favourite')
+  async getFavouriteIdeas() {
+    return await this.ideaService.getFavouriteIdeas();
+  }
+
+  @Patch('status')
+  async statusUpdate(@Body('ideaIds') ideaIds: string[], @Body('status') status: string) {
+    return await this.ideaService.statusUpdate(ideaIds, status);
+  }
+
 
 }
