@@ -25,7 +25,7 @@ export class Idea {
     status: string;
 
     @Column('json')
-    history: IdeaHistory[];
+    history?: IdeaHistory[];
 
     @Column()
     createdBy: string;
