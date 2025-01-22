@@ -18,7 +18,7 @@ export class IdeaService {
   ) { }
 
   // create and save a new idea document submitted by a user
-  async create(createIdeaDto: CreateIdeaDto) {
+  async createIdea(createIdeaDto: CreateIdeaDto) {
     const { title, description } = createIdeaDto;
     const user = 'Ákos';
     const status = 'new';
@@ -55,7 +55,7 @@ export class IdeaService {
   }
 
   // get all existing ideas in an array
-  async findAll() {
+  async getAllIdeas() {
     const ideas = await this.ideaRepository.find({
       where: { boolId: true }
     });
@@ -73,8 +73,14 @@ export class IdeaService {
     return idea;
   }
 
+  // get one idea and return
+  async getIdea(id: string) {
+    const idea = await this.findOne(id);
+    return idea;
+  }
+
   // update idea title and/or description by user
-  async update(id: string, updateIdeaDto: UpdateIdeaDto) {
+  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto) {
     const user = 'Ákos'
     const idea = await this.findOne(id);
     const { title, description, status } = updateIdeaDto;
@@ -98,7 +104,7 @@ export class IdeaService {
   }
 
   // remove an idea (set boolId = false)
-  async remove(id: string) {
+  async removeIdea(id: string) {
     const user = 'Ákos'
     const idea = await this.findOne(id);
 
