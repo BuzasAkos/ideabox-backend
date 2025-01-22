@@ -27,6 +27,11 @@ export class IdeaController {
     return await this.ideaService.findOne(id);
   }
 
+  @Patch('status')
+  async statusUpdate(@Body('ideaIds') ideaIds: string[], @Body('status') status: string) {
+    return await this.ideaService.statusUpdate(ideaIds, status);
+  }
+
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto) {
     return await this.ideaService.update(id, updateIdeaDto);

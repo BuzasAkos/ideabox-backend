@@ -81,7 +81,7 @@ export class IdeaService {
     );
   }
 
-  // update idea title and/or description by user
+  // update idea title and/or description and/or status by user
   async update(id: string, updateIdeaDto: UpdateIdeaDto) {
     const user = 'Ákos'
     const idea = await this.findOne(id);
@@ -107,6 +107,31 @@ export class IdeaService {
     );
   }
 
+  // bulk update idea status
+  async statusUpdate(ideaIds: string[], status: string) {
+    const user = "Ákos";
+    const now = new Date();
+  
+    const ideas = await this.ideaRepository.find({
+      where: { _id: { $in: ideaIds.map(id => new ObjectId(id)) } },
+    });
+  
+    for (const idea of ideas) {
+      idea.status = status;
+      idea.modifiedAt = now;
+      idea.modifiedBy = user;
+      idea.history.push({
+        id: uuidv4(),
+        status,
+        createdAt: now,
+        createdBy: user,
+      });
+    }
+  
+    await this.ideaRepository.save(ideas); 
+    return { message: `Status updated for ${ideas.length} ideas.` };
+  }
+  
   // remove an idea (set boolId = false)
   async remove(id: string) {
     const user = 'Ákos';
