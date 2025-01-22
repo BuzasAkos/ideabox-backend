@@ -62,5 +62,4 @@ export class IdeaController {
     return await this.ideaService.statusUpdate(ideaIds, status);
   }
 
-
 }
