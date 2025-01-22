@@ -10,8 +10,6 @@ import { ObjectId } from 'mongodb';
 @Injectable()
 export class IdeaService {
 
-  // ideas: Idea[] = [];
-
   constructor(
     @InjectRepository(Idea)
     private ideaRepository: MongoRepository<Idea>
@@ -60,15 +58,43 @@ export class IdeaService {
     }
   }
 
-  // get all existing ideas in an array
-  async findAll() {
-    const ideas = await this.ideaRepository.find({
-      where: { boolId: true }
-    });
-    return ideas;
+  // get all ideas ranked by votes, filtered embedded arrays by boolId
+  async getAllIdeas() {
+    const pipeline = [
+      { 
+        $match: { boolId: true } 
+      },
+      { 
+        $addFields: { 
+          comments: { $filter: { 
+            input: "$comments",      
+            as: "comment",
+            cond: { $eq: ["$$comment.boolId", true] }
+          } } 
+        } 
+      },
+      { 
+        $addFields: { 
+          votes: { $filter: { 
+            input: "$votes",      
+            as: "vote",
+            cond: { $eq: ["$$vote.boolId", true] }
+          } } 
+        } 
+      },
+      { 
+        $unset: "history" 
+      },
+      { 
+        $sort: { voteCount: -1, createdAt: -1 } 
+      },
+    ]
+    const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
+
+    return { ideas };
   }
 
-  // get one idea document given by its id
+  // helper: get one idea document given by its id, throw error if not found
   async findOne(id: string) {
     const idea = await this.ideaRepository.findOne({
       where: { _id: new ObjectId(id), boolId: true }
@@ -113,33 +139,6 @@ export class IdeaService {
     );
   }
 
-  // bulk update idea status
-  async statusUpdate(ideaIds: string[], status: string) {
-    const user = "Ákos";
-    const now = new Date();
-  
-    const ideas = await this.ideaRepository.find({
-      where: { _id: { $in: ideaIds.map(id => new ObjectId(id)) } },
-    });
-  
-    for (const idea of ideas) {
-      if (status !== idea.status) {
-        idea.status = status;
-        idea.modifiedAt = now;
-        idea.modifiedBy = user;
-        idea.history.push({
-          id: uuidv4(),
-          status,
-          createdAt: now,
-          createdBy: user,
-        });
-      }
-    }
-  
-    await this.ideaRepository.save(ideas); 
-    return { message: `Status updated for ${ideas.length} ideas.` };
-  }
-  
   // remove an idea (set boolId = false)
   async removeIdea(id: string) {
     const user = 'Ákos';
@@ -239,6 +238,33 @@ export class IdeaService {
     return {message: 'comment deleted'}
   }
 
+  // bulk update idea status
+  async statusUpdate(ideaIds: string[], status: string) {
+    const user = "Ákos";
+    const now = new Date();
+  
+    const ideas = await this.ideaRepository.find({
+      where: { _id: { $in: ideaIds.map(id => new ObjectId(id)) } },
+    });
+  
+    for (const idea of ideas) {
+      if (status !== idea.status) {
+        idea.status = status;
+        idea.modifiedAt = now;
+        idea.modifiedBy = user;
+        idea.history.push({
+          id: uuidv4(),
+          status,
+          createdAt: now,
+          createdBy: user,
+        });
+      }
+    }
+  
+    await this.ideaRepository.save(ideas); 
+    return { message: `Status updated for ${ideas.length} ideas.` };
+  }
+
   // get all ideas that I voted for, sort by creation date, filtering on boolId in all embedded arrays
   async getFavouriteIdeas() {
     const user = 'Ákos';
@@ -281,68 +307,6 @@ export class IdeaService {
 
     return { ideas };
   }
-
-  // get all ideas ranked by votes, filtered by boolId, sorting embedded comments by creation date
-  async getAllIdeas() {
-    const pipeline = [
-      { 
-        $match: { boolId: true } 
-      },
-      { 
-        $addFields: { 
-          comments: { $filter: { 
-            input: "$comments",      
-            as: "comment",
-            cond: { $eq: ["$$comment.boolId", true] }
-          } } 
-        } 
-      },
-      { 
-        $addFields: { 
-          comments: { $sortArray: { 
-            input: "$comments",      
-            sortBy: { createdAt: -1 }
-          } } 
-        } 
-      },
-      { 
-        $addFields: { 
-          votes: { $filter: { 
-            input: "$votes",      
-            as: "vote",
-            cond: { $eq: ["$$vote.boolId", true] }
-          } } 
-        } 
-      },
-      { 
-        $unset: "history" 
-      },
-      { 
-        $sort: { voteCount: -1, createdAt: -1 } 
-      },
-    ]
-    const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
-
-    return { ideas };
-  }
-
-  // helper: get existing idea titles
-  /* async getAllTitlesV2() {
-    const titles = await this.ideaRepository.aggregate([
-      { 
-        $match: {
-          boolId: true
-        } 
-      },
-      {
-        $project: {
-          title: 1,
-          _id: 0
-        }
-      }
-    ]).toArray();
-    return titles.map(item => item.title);
-  } */
 
   // helper: get existing idea titles
   async getAllTitles() {
