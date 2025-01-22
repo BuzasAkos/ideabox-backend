@@ -117,15 +117,17 @@ export class IdeaService {
     });
   
     for (const idea of ideas) {
-      idea.status = status;
-      idea.modifiedAt = now;
-      idea.modifiedBy = user;
-      idea.history.push({
-        id: uuidv4(),
-        status,
-        createdAt: now,
-        createdBy: user,
-      });
+      if (status !== idea.status) {
+        idea.status = status;
+        idea.modifiedAt = now;
+        idea.modifiedBy = user;
+        idea.history.push({
+          id: uuidv4(),
+          status,
+          createdAt: now,
+          createdBy: user,
+        });
+      }
     }
   
     await this.ideaRepository.save(ideas); 
