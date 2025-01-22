@@ -13,7 +13,7 @@ export class IdeaService {
   constructor() {}
 
   // create and save a new idea document submitted by a user
-  create(createIdeaDto: CreateIdeaDto) {
+  createIdea(createIdeaDto: CreateIdeaDto) {
     const { title, description } = createIdeaDto;
     const user = 'Ákos';
     const status = 'new';
@@ -52,7 +52,7 @@ export class IdeaService {
   }
 
   // get all existing ideas in an array
-  findAll() {
+  getAllIdeas() {
     const ideas = this.ideas.filter(item => item.boolId === true);
     return ideas;
   }
@@ -66,8 +66,14 @@ export class IdeaService {
     return idea;
   }
 
+  // get one idea and return
+  getIdea(id: string) {
+    const idea = this.findOne(id);
+    return idea;
+  }
+
   // update idea title and/or description by user
-  update(id: string, updateIdeaDto: UpdateIdeaDto) {
+  updateIdea(id: string, updateIdeaDto: UpdateIdeaDto) {
     const user = 'Ákos'
     const idea = this.findOne(id);
     const { title, description, status } = updateIdeaDto;
@@ -91,7 +97,7 @@ export class IdeaService {
   }
 
   // remove an idea (set boolId = false)
-  remove(id: string) {
+  removeIdea(id: string) {
     const user = 'Ákos'
     const idea = this.findOne(id);
 

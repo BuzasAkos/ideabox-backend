@@ -8,27 +8,27 @@ export class IdeaController {
   constructor(private readonly ideaService: IdeaService) {}
 
   @Post()
-  create(@Body() createIdeaDto: CreateIdeaDto) {
-    return this.ideaService.create(createIdeaDto);
+  createIdea(@Body() createIdeaDto: CreateIdeaDto) {
+    return this.ideaService.createIdea(createIdeaDto);
   }
 
   @Get()
-  findAll() {
-    return this.ideaService.findAll();
+  getAllIdeas() {
+    return this.ideaService.getAllIdeas();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ideaService.findOne(id);
+  getIdea(@Param('id') id: string) {
+    return this.ideaService.getIdea(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto) {
-    return this.ideaService.update(id, updateIdeaDto);
+  updateIdea(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto) {
+    return this.ideaService.updateIdea(id, updateIdeaDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ideaService.remove(id);
+  removeIdea(@Param('id') id: string) {
+    return this.ideaService.removeIdea(id);
   }
 }
