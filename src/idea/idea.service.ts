@@ -18,9 +18,8 @@ export class IdeaService {
   ) { }
 
   // create and save a new idea document submitted by a user
-  async createIdea(createIdeaDto: CreateIdeaDto) {
+  async createIdea(createIdeaDto: CreateIdeaDto, user: string) {
     const { title, description } = createIdeaDto;
-    const user = 'Ákos';
     const status = 'new';
     try {
       const idea: WithoutId<Idea> = {
@@ -80,8 +79,7 @@ export class IdeaService {
   }
 
   // update idea title and/or description by user
-  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto) {
-    const user = 'Ákos'
+  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto, user: string) {
     const idea = await this.findOne(id);
     const { title, description, status } = updateIdeaDto;
     if (!title && !description && !status) {
@@ -104,8 +102,7 @@ export class IdeaService {
   }
 
   // remove an idea (set boolId = false)
-  async removeIdea(id: string) {
-    const user = 'Ákos'
+  async removeIdea(id: string, user: string) {
     const idea = await this.findOne(id);
 
     idea.modifiedBy = user;

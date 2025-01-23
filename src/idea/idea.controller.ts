@@ -3,32 +3,35 @@ import { IdeaService } from './idea.service';
 import { CreateIdeaDto } from './dto/create-idea.dto';
 import { UpdateIdeaDto } from './dto/update-idea.dto';
 
-@Controller('idea')
+@Controller('ideabox')
 export class IdeaController {
   constructor(private readonly ideaService: IdeaService) {}
 
-  @Post()
+  @Post('idea')
   async createIdea(@Body() createIdeaDto: CreateIdeaDto) {
-    return await this.ideaService.createIdea(createIdeaDto);
+    const user = 'Ákos';
+    return await this.ideaService.createIdea(createIdeaDto, user);
   }
 
-  @Get()
+  @Get('ideas')
   async getAllIdeas() {
     return await this.ideaService.getAllIdeas();
   }
 
-  @Get(':id')
+  @Get('idea/:id')
   async getIdea(@Param('id') id: string) {
     return await this.ideaService.getIdea(id);
   }
 
-  @Patch(':id')
+  @Patch('idea/:id')
   async updateIdea(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto) {
-    return await this.ideaService.updateIdea(id, updateIdeaDto);
+    const user = 'Ákos';
+    return await this.ideaService.updateIdea(id, updateIdeaDto, user);
   }
 
-  @Delete(':id')
+  @Delete('idea/:id')
   async removeIdea(@Param('id') id: string) {
-    return await this.ideaService.removeIdea(id);
+    const user = 'Ákos';
+    return await this.ideaService.removeIdea(id, user);
   }
 }
