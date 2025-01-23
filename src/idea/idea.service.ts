@@ -16,9 +16,8 @@ export class IdeaService {
   ) { }
 
   // create and save a new idea document submitted by a user
-  async createIdea(createIdeaDto: CreateIdeaDto) {
+  async createIdea(createIdeaDto: CreateIdeaDto, user: string) {
     const { title, description } = createIdeaDto;
-    const user = 'Ákos';
     const status = 'new';
 
     const existingTitles = await this.getAllTitles();
@@ -114,8 +113,7 @@ export class IdeaService {
   }
 
   // update idea title and/or description and/or status by user
-  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto) {
-    const user = 'Ákos'
+  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto, user: string) {
     const idea = await this.findOne(id);
     const { title, description, status } = updateIdeaDto;
     if (!title && !description && !status) {
@@ -140,8 +138,7 @@ export class IdeaService {
   }
 
   // remove an idea (set boolId = false)
-  async removeIdea(id: string) {
-    const user = 'Ákos';
+  async removeIdea(id: string, user: string) {
     const idea = await this.findOne(id);
 
     idea.modifiedBy = user;
@@ -153,8 +150,7 @@ export class IdeaService {
   }
 
   // add a vote to an idea by a user
-  async addVote(id: string) {
-    const user = 'Ákos';
+  async addVote(id: string, user: string) {
     const idea = await this.findOne(id);
     if (idea.votes.find(item => item.boolId && item.createdBy === user)) {
       throw new HttpException('You have already voted for this idea.', HttpStatus.NOT_ACCEPTABLE);
@@ -178,8 +174,7 @@ export class IdeaService {
   }
 
   // remove a vote from an idea by a user
-  async removeVote(id: string) {
-    const user = 'Ákos';
+  async removeVote(id: string, user: string) {
     const idea = await this.findOne(id);
     const vote= idea.votes.find(item => item.createdBy === user && item.boolId);
     if (!vote) {
@@ -199,8 +194,7 @@ export class IdeaService {
   }
 
   // add comment by user
-  async addComment(id: string, text: string) {
-    const user = 'Ákos';
+  async addComment(id: string, text: string, user: string) {
     const idea = await this.findOne(id);
 
     idea.comments.push({
@@ -219,8 +213,7 @@ export class IdeaService {
   }
 
   // remove a specific comment
-  async removeComment(id: string, commentId: string) {
-    const user = 'Ákos';
+  async removeComment(id: string, commentId: string, user: string) {
     const idea = await this.findOne(id);
     const comment = idea.comments.find(item => item.boolId && item.id === commentId);
     if (!comment) {
@@ -239,8 +232,7 @@ export class IdeaService {
   }
 
   // bulk update idea status
-  async statusUpdate(ideaIds: string[], status: string) {
-    const user = "Ákos";
+  async statusUpdate(ideaIds: string[], status: string, user: string) {
     const now = new Date();
   
     const ideas = await this.ideaRepository.find({
@@ -266,9 +258,7 @@ export class IdeaService {
   }
 
   // get all ideas that I voted for, sort by creation date, filtering on boolId in all embedded arrays
-  async getFavouriteIdeas() {
-    const user = 'Ákos';
-
+  async getFavouriteIdeas(user: string) {
     const pipeline = [
       { 
         $match: { 
