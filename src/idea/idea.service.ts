@@ -238,7 +238,8 @@ export class IdeaService {
     const ideas = await this.ideaRepository.find({
       where: { _id: { $in: ideaIds.map(id => new ObjectId(id)) } },
     });
-  
+    
+    let modCount = 0;
     for (const idea of ideas) {
       if (status !== idea.status) {
         idea.status = status;
@@ -250,11 +251,12 @@ export class IdeaService {
           createdAt: now,
           createdBy: user,
         });
+        modCount++
       }
     }
   
     await this.ideaRepository.save(ideas); 
-    return { message: `Status updated for ${ideas.length} ideas.` };
+    return { message: `Status updated for ${modCount} ideas.` };
   }
 
   // get all ideas that I voted for, sort by creation date, filtering on boolId in all embedded arrays
@@ -318,7 +320,6 @@ export class IdeaService {
       ...idea,
       votes: idea.votes.filter(i => i.boolId),
       comments: idea.comments.filter(i => i.boolId),
-      history: []
     }
   }
 
