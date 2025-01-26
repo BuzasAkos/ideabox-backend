@@ -17,7 +17,7 @@ export class AuthService {
 
         const token = this.jwtService.sign(
             { name },
-            { expiresIn: '1h' }
+            { secret: 'ideaBox25', expiresIn: '1h' }
         );
         return { token }
     }
