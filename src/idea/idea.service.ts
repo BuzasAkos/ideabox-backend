@@ -85,7 +85,7 @@ export class IdeaService {
         $unset: "history" 
       },
       { 
-        $sort: { voteCount: -1, createdAt: -1 } 
+        $sort: { createdAt: -1 } 
       },
     ]
     const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
