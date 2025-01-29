@@ -53,7 +53,7 @@ export class IdeaService {
   // get all existing ideas in an array
   getAllIdeas() {
     const ideas = this.ideas.filter(item => item.boolId === true);
-    return ideas;
+    return { ideas };
   }
 
   // get one idea document given by its id
