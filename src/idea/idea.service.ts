@@ -58,7 +58,7 @@ export class IdeaService {
     const ideas = await this.ideaRepository.find({
       where: { boolId: true }
     });
-    return ideas;
+    return { ideas };
   }
 
   // get one idea document given by its id
