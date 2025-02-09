@@ -89,6 +89,22 @@ export class IdeaService {
         $unset: "history" 
       },
       { 
+        $lookup: {
+          from: "choices",           // The choices collection
+          localField: "status",      // The status field in the current document
+          foreignField: "code",      // The code field in choices
+          as: "statusChoice"         // The output array
+        }
+      },
+      { 
+        $addFields: { 
+          status: { $arrayElemAt: ["$statusChoice.displayName", 0] } // Replace status with displayName
+        } 
+      },
+      { 
+        $unset: "statusChoice"       // Remove temporary lookup field
+      },
+      { 
         $sort: { createdAt: -1 } 
       },
     ]
@@ -294,6 +310,22 @@ export class IdeaService {
       },
       { 
         $unset: "history" 
+      },
+      { 
+        $lookup: {
+          from: "choices",           // The choices collection
+          localField: "status",      // The status field in the current document
+          foreignField: "code",      // The code field in choices
+          as: "statusChoice"         // The output array
+        }
+      },
+      { 
+        $addFields: { 
+          status: { $arrayElemAt: ["$statusChoice.displayName", 0] } // Replace status with displayName
+        } 
+      },
+      { 
+        $unset: "statusChoice"       // Remove temporary lookup field
       },
       { 
         $sort: { voteCount: -1, createdAt: -1 } 
