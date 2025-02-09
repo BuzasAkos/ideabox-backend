@@ -6,13 +6,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { MongoRepository, WithoutId } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
+import { Choice } from './entities/choice.entity';
+import { CreateChoiceDto } from './dto/create-choice.dto';
 
 @Injectable()
 export class IdeaService {
 
   constructor(
     @InjectRepository(Idea)
-    private ideaRepository: MongoRepository<Idea>
+    private ideaRepository: MongoRepository<Idea>,
+    @InjectRepository(Choice)
+    private choiceRepository: MongoRepository<Choice>
   ) { }
 
   // create and save a new idea document submitted by a user
@@ -298,6 +302,22 @@ export class IdeaService {
     const ideas = await this.ideaRepository.aggregate(pipeline).toArray();
 
     return { ideas };
+  }
+
+  // add a new item to the choices collection
+  async createChoice(createChoiceDto: CreateChoiceDto) {
+    const choice: WithoutId<Choice> = {
+      ...createChoiceDto,
+      createdAt: new Date(),
+      isSelectable: true
+    }
+    return await this.choiceRepository.save(choice);
+  }
+
+  // query the full list of choices (status)
+  async getChoices() {
+    const choices = await this.choiceRepository.find();
+    return choices;
   }
 
   // helper: get existing idea titles

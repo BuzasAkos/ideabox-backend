@@ -3,6 +3,7 @@ import { IdeaService } from './idea.service';
 import { CreateIdeaDto } from './dto/create-idea.dto';
 import { UpdateIdeaDto } from './dto/update-idea.dto';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { CreateChoiceDto } from './dto/create-choice.dto';
 
 @Controller('ideabox')
 export class IdeaController {
@@ -79,6 +80,16 @@ export class IdeaController {
   async statusUpdate(@Body('ideaIds') ideaIds: string[], @Body('status') status: string, @Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.statusUpdate(ideaIds, status, user);
+  }
+
+  @Post('choice')
+  async createChoice(@Body() createChoiceDto: CreateChoiceDto) {
+    return await this.ideaService.createChoice(createChoiceDto);
+  }
+
+  @Get('choices')
+  async getChoices() {
+    return await this.ideaService.getChoices();
   }
 
 }
