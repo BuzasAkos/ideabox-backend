@@ -62,10 +62,17 @@ export class IdeaService {
   }
 
   // get all ideas ranked by votes, filtered embedded arrays by boolId
-  async getAllIdeas() {
+  async getAllIdeas(user?: string) {
+    let matchCondition: any = {
+      boolId: true
+    };
+    if (user) {
+      matchCondition.votes = { $elemMatch: { createdBy: user, boolId: true } };
+    }
+    
     const pipeline = [
       { 
-        $match: { boolId: true } 
+        $match: matchCondition
       },
       { 
         $addFields: { 
@@ -108,6 +115,7 @@ export class IdeaService {
         $sort: { createdAt: -1 } 
       },
     ]
+
     const ideas: Idea[] = await this.ideaRepository.aggregate(pipeline).toArray();
 
     return { ideas };
@@ -279,63 +287,6 @@ export class IdeaService {
     return { message: `Status updated for ${modCount} ideas.` };
   }
 
-  // get all ideas that I voted for, sort by creation date, filtering on boolId in all embedded arrays
-  async getFavouriteIdeas(user: string) {
-    const pipeline = [
-      { 
-        $match: { 
-          boolId: true, 
-          votes: { 
-            $elemMatch: { createdBy: user, boolId: true } 
-          }
-        } 
-      },
-      { 
-        $addFields: { 
-          comments: { $filter: { 
-            input: "$comments",      
-            as: "comment",
-            cond: { $eq: ["$$comment.boolId", true] }
-          } } 
-        } 
-      },
-      { 
-        $addFields: { 
-          votes: { $filter: { 
-            input: "$votes",      
-            as: "vote",
-            cond: { $eq: ["$$vote.boolId", true] }
-          } } 
-        } 
-      },
-      { 
-        $unset: "history" 
-      },
-      { 
-        $lookup: {
-          from: "choices",           // The choices collection
-          localField: "status",      // The status field in the current document
-          foreignField: "code",      // The code field in choices
-          as: "statusChoice"         // The output array
-        }
-      },
-      { 
-        $addFields: { 
-          status: { $arrayElemAt: ["$statusChoice.displayName", 0] } // Replace status with displayName
-        } 
-      },
-      { 
-        $unset: "statusChoice"       // Remove temporary lookup field
-      },
-      { 
-        $sort: { voteCount: -1, createdAt: -1 } 
-      },
-    ]
-    const ideas = await this.ideaRepository.aggregate(pipeline).toArray();
-
-    return { ideas };
-  }
-
   // add a new item to the choices collection
   async createChoice(createChoiceDto: CreateChoiceDto) {
     const choice: WithoutId<Choice> = {
@@ -359,7 +310,7 @@ export class IdeaService {
         boolId: true, 
       },
       select: {
-        title: true, 
+        title: true,
       },
     });
   

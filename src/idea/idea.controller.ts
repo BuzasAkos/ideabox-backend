@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { IdeaService } from './idea.service';
 import { CreateIdeaDto } from './dto/create-idea.dto';
 import { UpdateIdeaDto } from './dto/update-idea.dto';
@@ -16,8 +16,13 @@ export class IdeaController {
     return await this.ideaService.createIdea(createIdeaDto, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('ideas')
-  async getAllIdeas() {
+  async getAllIdeas(@Query('favourite') favourite: boolean, @Req() req: any) {
+    const user = req.user.name;
+    if (favourite) {
+      return await this.ideaService.getAllIdeas(user);
+    }
     return await this.ideaService.getAllIdeas();
   }
 
@@ -72,7 +77,7 @@ export class IdeaController {
   @Get('ideas/favourite')
   async getFavouriteIdeas(@Req() req: any) {
     const user = req.user.name;
-    return await this.ideaService.getFavouriteIdeas(user);
+    return await this.ideaService.getAllIdeas(user);
   }
 
   @UseGuards(JwtAuthGuard)
