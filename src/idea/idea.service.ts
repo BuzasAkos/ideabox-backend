@@ -62,13 +62,17 @@ export class IdeaService {
   }
 
   // get all ideas ranked by votes, filtered embedded arrays by boolId
-  async getAllIdeas(user?: string) {
+  async getAllIdeas(user?: string, searchText?: string) {
     let matchCondition: any = {
       boolId: true
     };
     if (user) {
       matchCondition.votes = { $elemMatch: { createdBy: user, boolId: true } };
     }
+    if (searchText) {
+      matchCondition.title = { $regex: searchText + '$', $options: "i" }
+    }
+    console.log(matchCondition);
     
     const pipeline = [
       { 
@@ -299,7 +303,7 @@ export class IdeaService {
 
   // query the full list of choices (status)
   async getChoices() {
-    const choices = await this.choiceRepository.find();
+    const choices = await this.choiceRepository.find({where: {isSelectable: true}});
     return choices;
   }
 

@@ -16,14 +16,14 @@ export class IdeaController {
     return await this.ideaService.createIdea(createIdeaDto, user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get('ideas')
-  async getAllIdeas(@Query('favourite') favourite: boolean, @Req() req: any) {
-    const user = req.user.name;
+  async getAllIdeas(@Query('favourite') favourite: boolean, @Query('search') searchText: string, @Req() req: any) {
+    const user = "Ákos";
     if (favourite) {
-      return await this.ideaService.getAllIdeas(user);
+      return await this.ideaService.getAllIdeas(user, searchText);
     }
-    return await this.ideaService.getAllIdeas();
+    return await this.ideaService.getAllIdeas(undefined, searchText);
   }
 
   @Get('idea/:id')
