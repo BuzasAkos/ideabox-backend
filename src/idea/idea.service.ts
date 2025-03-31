@@ -291,6 +291,32 @@ export class IdeaService {
     return { message: `Status updated for ${modCount} ideas.` };
   }
 
+  // alternative for bulk update:
+  /* async statusUpdate2(ideaIds: string[], status: string, user: string) {
+    const now = new Date();
+  
+    const updateResult = await this.ideaRepository.updateMany(
+      { _id: { $in: ideaIds.map(id => new ObjectId(id)) }, status: { $ne: status } }, 
+      {
+        $set: {
+          status: status,
+          modifiedAt: now,
+          modifiedBy: user,
+        },
+        $push: {
+          history: {
+            id: uuidv4(),
+            status: status,
+            createdAt: now,
+            createdBy: user,
+          },
+        },
+      }
+    );
+  
+    return { message: `Status updated for ${updateResult.modifiedCount} ideas.` };
+  } */
+
   // add a new item to the choices collection
   async createChoice(createChoiceDto: CreateChoiceDto) {
     const choice: WithoutId<Choice> = {
