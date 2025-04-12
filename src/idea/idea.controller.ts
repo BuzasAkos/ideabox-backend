@@ -5,18 +5,17 @@ import { UpdateIdeaDto } from './dto/update-idea.dto';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { CreateChoiceDto } from './dto/create-choice.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('ideabox')
 export class IdeaController {
   constructor(private readonly ideaService: IdeaService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post('idea')
   async createIdea(@Body() createIdeaDto: CreateIdeaDto, @Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.createIdea(createIdeaDto, user);
   }
 
-  // @UseGuards(JwtAuthGuard)
   @Get('ideas')
   async getAllIdeas(@Query('favourite') favourite: boolean, @Query('search') searchText: string, @Req() req: any) {
     const user = "Ákos";
@@ -31,56 +30,49 @@ export class IdeaController {
     return await this.ideaService.getIdea(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('idea/:id')
   async updateIdea(@Param('id') id: string, @Body() updateIdeaDto: UpdateIdeaDto, @Req() req: any) {
     const user = req.user.name;
-    return await this.ideaService.updateIdea(id, updateIdeaDto, user);
+    const roles = req.user.roles;
+    return await this.ideaService.updateIdea(id, updateIdeaDto, user, roles);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('idea/:id')
   async removeIdea(@Param('id') id: string, @Req() req: any) {
     const user = req.user.name;
-    return await this.ideaService.removeIdea(id, user);
+    const roles = req.user.roles;
+    return await this.ideaService.removeIdea(id, user, roles);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('idea/:id/vote')
   async addVote(@Param('id') id: string, @Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.addVote(id, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('idea/:id/unvote')
   async removeVote(@Param('id') id: string, @Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.removeVote(id, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('idea/:id/comment')
   async addComment(@Param('id') id: string, @Body('text') text: string, @Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.addComment(id, text, user);
   }
-
-  @UseGuards(JwtAuthGuard)
   @Delete('idea/:id/comment/:commentId')
   async removeComment(@Param('id') id: string, @Param('commentId') commentId: string, @Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.removeComment(id, commentId, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('ideas/favourite')
   async getFavouriteIdeas(@Req() req: any) {
     const user = req.user.name;
     return await this.ideaService.getAllIdeas(user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('ideas/status')
   async statusUpdate(@Body('ideaIds') ideaIds: string[], @Body('status') status: string, @Req() req: any) {
     const user = req.user.name;

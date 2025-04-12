@@ -22,7 +22,7 @@ export class IdeaService {
   // create and save a new idea document submitted by a user
   async createIdea(createIdeaDto: CreateIdeaDto, user: string) {
     const { title, description } = createIdeaDto;
-    const status = 'new';
+    const status = 'S100';
 
     const existingTitles = await this.getAllTitles();
     if (existingTitles.includes(title.toLowerCase())) {
@@ -145,11 +145,15 @@ export class IdeaService {
   }
 
   // update idea title and/or description and/or status by user
-  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto, user: string) {
+  async updateIdea(id: string, updateIdeaDto: UpdateIdeaDto, user: string, roles: string) {
     const idea = await this.findOne(id);
     const { title, description, status } = updateIdeaDto;
     if (!title && !description && !status) {
       return idea;
+    }
+
+    if (idea.createdBy !== user && !this.isAdmin(roles)) {
+      throw new HttpException('You are not authorized to modify this idea', HttpStatus.UNAUTHORIZED);
     }
 
     idea.title = title ?? idea.title;
@@ -170,8 +174,12 @@ export class IdeaService {
   }
 
   // remove an idea (set boolId = false)
-  async removeIdea(id: string, user: string) {
+  async removeIdea(id: string, user: string, roles: string) {
     const idea = await this.findOne(id);
+
+    if (idea.createdBy !== user && !this.isAdmin(roles)) {
+      throw new HttpException('You are not authorized to delete this idea', HttpStatus.UNAUTHORIZED);
+    }
 
     idea.modifiedBy = user;
     idea.modifiedAt = new Date();
@@ -354,6 +362,19 @@ export class IdeaService {
       votes: idea.votes.filter(i => i.boolId),
       comments: idea.comments.filter(i => i.boolId),
     }
+  }
+
+  // helper function: check if the current user has admin role
+  isAdmin(roles: string) {
+    return roles.split(', ').includes('admin');
+  }
+
+  isSupervisor(roles: string) {
+    return roles.split(', ').includes('supervisor');
+  }
+
+  isModerator(roles: string) {
+    return roles.split(', ').includes('moderator');
   }
 
 }
