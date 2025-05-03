@@ -73,6 +73,12 @@ export class Comment {
     text: string;
 
     @Column()
+    aiChatRef?: string;
+
+    @Column()
+    sentiment?: string;
+
+    @Column()
     createdBy: string;
 
     @Column()

@@ -4,6 +4,7 @@ import { CreateIdeaDto } from './dto/create-idea.dto';
 import { UpdateIdeaDto } from './dto/update-idea.dto';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { CreateChoiceDto } from './dto/create-choice.dto';
+import { ChatResponseDto } from './dto/chat-response.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ideabox')
@@ -87,6 +88,33 @@ export class IdeaController {
   @Get('choices')
   async getChoices() {
     return await this.ideaService.getChoices();
+  }
+
+  @Post('ai/test')
+  async aiTest(
+    @Body('message') message: string
+  ): Promise<string> {
+    return await this.ideaService.aiTest(message);
+  }
+
+  @Post('ai/new')
+  async createAiChat(
+    @Body('type') type: string,
+    @Body('message') message: string,
+    @Req() req: any
+  ): Promise<ChatResponseDto> {
+    const user = req.user.name;
+    return await this.ideaService.createAiChat(type, message, user);
+  }
+
+  @Post('ai/chat/:id')
+  async appendAiChat(
+    @Param('id') id: string,
+    @Body('message') message: string,
+    @Req() req: any
+  ): Promise<ChatResponseDto> {
+    const user = req.user.name;
+    return await this.ideaService.appendAiChat(id, message, user);
   }
 
 }

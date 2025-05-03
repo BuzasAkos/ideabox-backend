@@ -8,15 +8,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
 import { Choice } from './entities/choice.entity';
 import { CreateChoiceDto } from './dto/create-choice.dto';
+import { Content, GoogleGenAI } from "@google/genai";
+import { AiChat } from './entities/ai-chat.entity';
+import { ChatResponseDto } from './dto/chat-response.dto';
+
 
 @Injectable()
 export class IdeaService {
+
+  ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  model = "gemini-2.0-flash";
 
   constructor(
     @InjectRepository(Idea)
     private ideaRepository: MongoRepository<Idea>,
     @InjectRepository(Choice)
-    private choiceRepository: MongoRepository<Choice>
+    private choiceRepository: MongoRepository<Choice>,
+    @InjectRepository(AiChat)
+    private aiChatRepository: MongoRepository<AiChat>,
   ) { }
 
   // create and save a new idea document submitted by a user
@@ -237,9 +246,14 @@ export class IdeaService {
   async addComment(id: string, text: string, user: string) {
     const idea = await this.findOne(id);
 
+    // get sentiment
+    const { aiChatRef, sentiment } = await this.getSentiment(idea.title, text, user);
+
     idea.comments.push({
       id: uuidv4(),
       text,
+      aiChatRef,
+      sentiment,
       createdBy: user,
       createdAt: new Date(),
       modifiedBy: user,
@@ -354,6 +368,208 @@ export class IdeaService {
   
     return ideas.map(idea => idea.title.toLowerCase());
   }
+
+
+  // AI function testing
+  async aiTest(message: string): Promise<any> {
+    const systemInstruction = 'You are helpful advisor. Provide short and concise answers.';
+    const chat = this.ai.chats.create({
+      model: this.model,
+      history: [
+        {
+          role: "user",
+          parts: [{ text: "Hello" }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Great to meet you. What would you like to know?" }],
+        },
+      ],
+      config: {
+        maxOutputTokens: 100,
+        temperature: 1.0,
+        systemInstruction,
+      },
+
+    });
+  
+    const response = await chat.sendMessage({
+      message,
+    });
+
+    return response.text;
+  }
+
+  // start a new chat with Gemini
+  async createAiChat(type: string, message: string, user: string): Promise<ChatResponseDto> {
+    const systemInstruction = 'You are a professional team building organizer. Answer each question of the client in a short and consize way, in maximum 100 words.';
+    const history: Content[] = [];
+    const now = new Date();
+
+    // create a new mongo document object
+    const aiChatDoc: WithoutId<AiChat> = {
+      type: 'advisory',
+      systemPrompt: systemInstruction,
+      chatMessages: [{
+        id: uuidv4(),
+        role: 'user',
+        text: message,
+        createdAt: now
+      }],
+      createdAt: now,
+      createdBy: user,
+      modifiedAt: now,
+      modifiedBy: user,
+      boolId: true
+    }
+
+     // initialize Gemini chat and send out the message
+    const chat = this.ai.chats.create({
+      model: this.model,
+      history,
+      config: {
+        maxOutputTokens: 150,
+        temperature: 1.5,
+        systemInstruction,
+      },
+    });
+
+    const response = await chat.sendMessage({
+      message,
+    });
+
+    // push response data to the mongo document
+    aiChatDoc.chatMessages.push({
+      id: uuidv4(),
+      role: 'model',
+      text: response.text,
+      createdAt: new Date()
+    })
+
+    // save document to db and return selected fields
+    const doc = await this.aiChatRepository.save(aiChatDoc);
+    return { id: doc._id.toString(), chatMessages: doc.chatMessages };
+  }
+
+  // continue existing chat with Gemini
+  async appendAiChat(id: string, message: string, user: string): Promise<ChatResponseDto> {
+
+    // read document from mongo
+    const aiChatDoc = await this.aiChatRepository.findOne({where: {_id: new ObjectId(id), boolId: true}});
+    if (!aiChatDoc) {
+      throw new HttpException('Chat not foind with this id', HttpStatus.NOT_FOUND);
+    }
+
+    // map history from document
+    const history: Content[] = aiChatDoc.chatMessages.map(item => {
+      return {
+        role: item.role,
+        parts: [{ text: item.text }]
+      }
+    });
+
+    // initialize Gemini chat and send out the message
+    const chat = this.ai.chats.create({
+      model: this.model,
+      history,
+      config: {
+        maxOutputTokens: 150,
+        temperature: 1.8,
+        systemInstruction: aiChatDoc.systemPrompt,
+      },
+    });
+
+    const response = await chat.sendMessage({
+      message,
+    });
+
+    // push message and response data to the mongo document
+    aiChatDoc.chatMessages.push( 
+      {
+        id: uuidv4(),
+        role: 'user',
+        text: message,
+        createdAt: new Date()
+      }, 
+      {
+        id: uuidv4(),
+        role: 'model',
+        text: response.text,
+        createdAt: new Date()
+      } 
+    );
+
+    // save document to db and return selected fields
+    const doc = await this.aiChatRepository.save(aiChatDoc);
+    return { id: doc._id.toString(), chatMessages: doc.chatMessages };
+  }
+
+  // evaluate the sentiment of a comment text
+  async getSentiment(title: string, commentText: string, user: string) {
+    const systemInstruction = 'You are a supervisor, who evaluates comments on team building ideas. You will receive the title of the ida and the text of the comment. Decide, whether the comment is positive (supports the idea) or negative or neutral. Answer in 1 word only, one of these options: "Positive", "Negative", "Neutral"';
+    const history: Content[] = [
+      {
+        role: 'user',
+        parts: [{ text: `Idea title: Hiking; Comment: Great, I love hiking.` }],
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Positive.' }],
+      },
+    ];
+    const now = new Date();
+    const message = `Idea title: ${title}; Comment: ${commentText}`
+
+    // create a new mongo document object
+    const aiChatDoc: WithoutId<AiChat> = {
+      type: 'sentiment',
+      systemPrompt: systemInstruction,
+      chatMessages: [{
+        id: uuidv4(),
+        role: 'user',
+        text: message,
+        createdAt: now
+      }],
+      createdAt: now,
+      createdBy: user,
+      modifiedAt: now,
+      modifiedBy: user,
+      boolId: true
+    }
+
+     // initialize Gemini chat and send out the message
+    const chat = this.ai.chats.create({
+      model: this.model,
+      history,
+      config: {
+        maxOutputTokens: 150,
+        temperature: 1.5,
+        systemInstruction,
+      },
+    });
+
+    const response = await chat.sendMessage({
+      message,
+    });
+
+    // push response data to the mongo document
+    aiChatDoc.chatMessages.push({
+      id: uuidv4(),
+      role: 'model',
+      text: response.text,
+      createdAt: new Date()
+    })
+
+    // save document to db
+    const doc = await this.aiChatRepository.save(aiChatDoc);
+    let sentiment = 'neutral';
+
+    // respond with result and chat document reference
+    if (response.text.toLowerCase().includes('positive')) sentiment = 'positive';
+    if (response.text.toLowerCase().includes('negative')) sentiment = 'negative';
+    return {aiChatRef: doc._id.toString(), sentiment};
+  }
+
 
   // helper function: filter embedded arrays of an idea by boolId
   filterValidItems(idea: Idea): Idea {
