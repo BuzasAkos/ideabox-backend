@@ -3,7 +3,7 @@ import { CreateIdeaDto } from './dto/create-idea.dto';
 import { UpdateIdeaDto } from './dto/update-idea.dto';
 import { Idea, IdeaHistory } from './entities/idea.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { MongoRepository, WithoutId } from 'typeorm';
+import { MongoRepository, Repository, WithoutId } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
 import { Choice } from './entities/choice.entity';
@@ -11,6 +11,9 @@ import { CreateChoiceDto } from './dto/create-choice.dto';
 import { Content, GoogleGenAI } from "@google/genai";
 import { AiChat } from './entities/ai-chat.entity';
 import { ChatResponseDto } from './dto/chat-response.dto';
+import * as nodemailer from 'nodemailer';
+import { User } from './entities/user.mysql-entity';
+import { Contact } from './entities/contact.mysql-entity';
 
 
 @Injectable()
@@ -19,6 +22,8 @@ export class IdeaService {
   ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   model = "gemini-2.0-flash";
 
+  private transporter: nodemailer.Transporter;
+
   constructor(
     @InjectRepository(Idea)
     private ideaRepository: MongoRepository<Idea>,
@@ -26,7 +31,20 @@ export class IdeaService {
     private choiceRepository: MongoRepository<Choice>,
     @InjectRepository(AiChat)
     private aiChatRepository: MongoRepository<AiChat>,
-  ) { }
+    @InjectRepository(User, "mysql")
+    private userRepository: Repository<User>,
+    @InjectRepository(Contact, "mysql")
+    private contactRepository: Repository<Contact>,
+  ) {
+    this.transporter = nodemailer.createTransport({
+      host: process.env.smtpHost,
+      port: 25,
+      secure: false,
+      tls: {
+          rejectUnauthorized: false
+      }
+    });
+  }
 
   // create and save a new idea document submitted by a user
   async createIdea(createIdeaDto: CreateIdeaDto, user: string) {
@@ -216,6 +234,11 @@ export class IdeaService {
     idea.voteCount = idea.votes.filter(item => item.boolId).length;
     idea.modifiedBy = user
     idea.modifiedAt = new Date();
+
+    const mailTo = await this.getCompanyMail(idea.createdBy);
+    const subject = 'Vote received';
+    const htmlText = `${user} szavazott az ötletedre: <strong>${idea.title}</strong>.`;
+    if (mailTo) this.sendMail(mailTo, subject, htmlText);
 
     return this.filterValidItems( 
       await this.ideaRepository.save(idea) 
@@ -592,5 +615,101 @@ export class IdeaService {
   isModerator(roles: string) {
     return roles.split(', ').includes('moderator');
   }
+
+  // helper function: send mail
+  async sendMail(
+    to: string,
+    subject: string,
+    htmlText: string,
+  ): Promise<{message: string}> {
+    try {
+        const info = await this.transporter.sendMail({
+            from: 'nestjs-training@telekom.hu',
+            to,
+            subject,
+            html: htmlText,
+        });
+        console.log(info);
+        return { message: 'Mail is successfully sent' }
+    } catch (err) {
+        console.log('Error sending email:', err);
+        throw new Error('Failed to send email');
+    }
+  }
+
+  // get contact data
+  async getContacts() {
+    return await this.contactRepository.find({
+      // relations: ['user']
+    });
+  }
+
+  // get user data
+  async getUsers() {
+    return await this.userRepository.find({
+      // relations: ['contacts']
+    });
+  }
+
+  // helper: get company email by userName - version 1
+  async getCompanyMail(user: string) {
+    const contact = await this.contactRepository.findOne({
+      where: { contactType: 'company', user: { userName: user } },
+      relations: ['user']
+    });
+    return contact?.email;
+  }
+
+  // helper: get company email by userName - version 2
+  async getCompanyMailV2(user: string) {
+    const contact = await this.contactRepository.createQueryBuilder('contact')
+    .innerJoinAndSelect('contact.user', 'user')
+    .where('contact.contactType = :type', { type: 'company' })
+    .andWhere('user.userName = :userName', { userName: user })
+    .getOne();
+
+    return contact?.email;
+  }
+
+  /* SQL version:
+
+  SELECT 
+    contact.*, 
+    user.*
+  FROM mean_pr.training_contacts AS contact
+  INNER JOIN mean_pr.training_users AS user 
+    ON contact.userTrusId = user.trus_id
+  WHERE contact.contact_type = 'company'
+    AND user.user_name = 'some_username'
+  LIMIT 1;
+
+  */
+
+  async searchUsers(searchText: string) {
+    const results = await this.contactRepository
+      .createQueryBuilder('contact')
+      .where('contact.email LIKE :pattern', { pattern: `%${searchText}%` })
+      .innerJoin('contact.user', 'user')
+      .select([
+        'user.fullName AS fullName',
+        'contact.email AS email',
+      ])
+      .getRawMany();
+      //.getSql();
+    
+    return results;
+  }
+
+  /* SQL version - searchText = "gmail":
+
+  SELECT 
+    user.full_name AS fullName, 
+    contact.email AS email
+  FROM mean_pr.training_contacts AS contact
+  INNER JOIN mean_pr.training_users AS user
+    ON contact.userTrusId = user.trus_id
+  WHERE contact.email LIKE '%gmail%';
+
+  */
 
 }

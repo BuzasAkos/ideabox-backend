@@ -24,7 +24,7 @@ export class AuthService {
         const roles = (await this.getRoleByUser(name)).join(', ');
         const token = this.jwtService.sign(
             { name, roles },
-            { secret: 'ideaBox25', expiresIn: '1h' }
+            { secret: 'ideaBox25', expiresIn: '12h' }
         );
         return { token }
     }

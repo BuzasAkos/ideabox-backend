@@ -5,6 +5,8 @@ import { UpdateIdeaDto } from './dto/update-idea.dto';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { CreateChoiceDto } from './dto/create-choice.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
+import { Contact } from './entities/contact.mysql-entity';
+import { User } from './entities/user.mysql-entity';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ideabox')
@@ -115,6 +117,32 @@ export class IdeaController {
   ): Promise<ChatResponseDto> {
     const user = req.user.name;
     return await this.ideaService.appendAiChat(id, message, user);
+  }
+
+  @Post('mailtest')
+  async sendMail(
+    @Body('to') to: string,
+    @Body('subject') subject: string,
+    @Body('htmlText') htmlText: string,
+    @Req() req: any
+  ): Promise<{message: string}> {
+    const user = req.user.name;
+    return await this.ideaService.sendMail(to, subject, htmlText);
+  }
+
+  @Get('contacts')
+  async getContacts(): Promise<Contact[]> {
+    return await this.ideaService.getContacts();
+  }
+
+  @Get('users')
+  async getUsers(): Promise<User[]> {
+    return await this.ideaService.getUsers();
+  }
+
+  @Get('findmail')
+  async searchUsers(@Query('search') searchText: string) {
+    return await this.ideaService.searchUsers(searchText);
   }
 
 }
